@@ -1,4 +1,4 @@
-package Postscript::Decode;
+package Postscript::TextDecode;
 
 use strict;
 use warnings;
@@ -4551,20 +4551,20 @@ sub glyph_to_char {
 #=======================
     my $self = shift;
     my $glyph = shift || '.notdef';
-    return $self->font_name eq 'ZapfDingbats'
+    return ( $self->font_name eq 'ZapfDingbats'
         ? $Zapfdingbats_Glyphs{ $glyph }
         : $Default_Glyphs{ $glyph }
-    ;
+    ) || '';
 }
 
 #=======================
-sub glyph_to_oct {
+sub glyph_to_dec {
 #=======================
     my $self = shift;
     my $glyph = shift;
     $self->encoding( shift );
 
-    return $self->encoding->{glyph_to_oct}{ $glyph } || 0;
+    return $self->encoding->{glyph_to_dec}{ $glyph } || 0;
 }
 
 #=======================
@@ -4573,9 +4573,11 @@ sub oct_to_glyph {
     my $self = shift;
     my $char = shift;
     $self->encoding( shift );
+    return '.notdef' unless $char;
 
     $char = oct($char);
-    return $self->encoding->{glyph_to_char}->[ $char ] || '';
+    my $glyph = $self->encoding->{glyph_to_char}->[ $char ];
+    return defined $glyph ? $glyph : '.notdef';
 }
 
 #=======================
@@ -4642,14 +4644,20 @@ sub _parse_encoding {
     my $hash = md5_hex( $encoding );
     return $Stored_Encodings{ $hash } if exists $Stored_Encodings{ $hash };
 
-    my @glyphs = map { /^\/(.*)$/ && lc $1 } split( ' ', $encoding );
+    my @glyphs = map { /^\/(.*)$/ && lc $1 } split( '\s+', $encoding );
     $Stored_Encodings{ $hash }{ glyph_to_char } = \@glyphs;
 
     for( my $i = 0; $i < scalar @glyphs; $i++ ) {
-        $Stored_Encodings{ $hash }{ glyph_to_oct }{ $glyphs[$i] } = $i;
+        $Stored_Encodings{ $hash }{ glyph_to_dec }{ $glyphs[$i] } = $i;
     }
 
     return $Stored_Encodings{ $hash };
+}
+
+#=======================
+sub _stored_encodings {
+#=======================
+    return \%Stored_Encodings;
 }
 
 1;
