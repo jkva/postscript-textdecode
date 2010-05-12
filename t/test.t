@@ -3,6 +3,8 @@
 use strict;
 use warnings FATAL => 'all';
 
+use utf8;
+
 use Test::Most  qw/defer_plan/;
 use Digest::MD5 qw/md5_hex/;
 use Postscript::TextDecode;
@@ -19,22 +21,24 @@ binmode $builder->todo_output,    ":utf8";
 my $module = 'Postscript::TextDecode';
 
 my $glyph       = 'odieresis';
+my $fake_glyph  = 'foobitybar';
 my $oct_index   = 232;
 my $dec_index   = oct($oct_index);
-my $charcode    = 214;
+my $charcode    = 246;
 my $char        = chr($charcode);
 my $postscript  = 'Hab Dank f\237r all Deine Liebe,';
 my $text        = 'Hab Dank für all Deine Liebe,';
 my $asciitext   = 'Alles sal reg kom';
 
-my $fake_encoding        = '/foo /bar            /.baz /xuux';
+my $fake_encoding        = '/foo /bar            /.baz /xuux /xuu.xuux';
 my %parsed_fake_encoding = (
-   glyph_to_char => [ qw{foo bar .baz xuux} ],
+   glyph_to_char => [ 'foo', 'bar', '', 'xuux', 'xuu' ],
    glyph_to_dec  => {
         'foo'  => 0,
         'bar'  => 1,
-        '.baz' => 2,
+        ''     => 2,
         'xuux' => 3,
+        'xuu'  => 4,
    },
 );
 
@@ -67,7 +71,7 @@ is( $obj->ps_to_text( $postscript ), $text,     'ps_to_text'                    
 #=== Unexpected Decoding ==
 is( $obj->glyph_to_char, q{},       'glyph_to_char for no args'                 );
 is( $obj->glyph_to_dec, 0,          'glyph_to_dec for no args'                  );
-is( $obj->oct_to_glyph, q{.notdef}, 'oct_to_glyph for no args'                  );
+is( $obj->oct_to_glyph, q{},        'oct_to_glyph for no args'                  );
 is( $obj->oct_to_char, q{},         'oct_to_char for no args'                   );
 is( $obj->ps_to_text( $asciitext ), $asciitext, 'ps_to_text with asciitext'     );
 # test u_to_char
