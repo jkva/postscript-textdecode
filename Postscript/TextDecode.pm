@@ -3884,6 +3884,9 @@ sub ps_to_text {
         $postscript =~ s{\\$1}{$decoded_chars}g;    
     }
 
+    $postscript =~ s{\\\(}{\(}g;  # remove \ from \( - string escape seq
+    $postscript =~ s{\\\)}{\)}g;  # remove \ from \) - string escape seq
+
     return $postscript;
 }
 
